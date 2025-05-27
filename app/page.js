@@ -30,7 +30,13 @@ export default function Home() {
           >
             Join the Waitlist
           </button>
-        </form>
+        </form><a
+  href="/essence-upload"
+  className="mt-8 inline-block px-8 py-3 rounded-2xl bg-white text-black font-bold shadow transition hover:bg-gray-200"
+>
+  Upload Your Essence
+</a>
+
         <div className="mt-10 text-xs opacity-50">
           &copy; {new Date().getFullYear()} Entarium – A Radiant Density Initiative
         </div>
