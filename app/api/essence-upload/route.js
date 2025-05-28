@@ -1,39 +1,39 @@
-import { NextResponse } from 'next/server'
-import { create } from 'ipfs-http-client'
-import { Client } from '@notionhq/client'
-import formidable from 'formidable'
-import fs from 'fs-extra'
+import { NextResponse } from 'next/server';
 
 export const config = {
   api: { bodyParser: false }
-}
-
-const ipfs = create({ url: process.env.IPFS_API })
-const notion = new Client({ auth: process.env.NOTION_TOKEN })
-const databaseId = process.env.NOTION_DB_ID
+};
 
 export async function POST(req) {
-  const form = formidable({ multiples: false })
-  const data = await new Promise((resolve, reject) => {
-    form.parse(req, (err, fields, files) => {
-      if (err) reject(err)
-      resolve({ fields, files })
-    })
-  })
-  const { fields, files } = data
-  const file = files.file
-  const buffer = await fs.readFile(file.filepath)
-  const ipfsResult = await ipfs.add(buffer)
-  const hash = ipfsResult.cid.toString()
-  await notion.pages.create({
-    parent: { database_id: databaseId },
-    properties: {
-      Name: { title: [{ text: { content: file.originalFilename } }] },
-      Email: fields.email ? { email: fields.email } : undefined,
-      Description: fields.description ? { rich_text: [{ text: { content: fields.description } }] } : undefined,
-      Hash: { rich_text: [{ text: { content: hash } }] },
-      Timestamp: { date: { start: new Date().toISOString() } }
-    }
-  })
-  return NextResponse.json({ ok: true, hash })
+  const formData = await req.formData();
+  const file = formData.get('file');
+
+  if (!file) {
+    return NextResponse.json({ ok: false, error: 'No file uploaded.' }, { status: 400 });
+  }
+
+  // Pinata endpoint and headers
+  const pinataEndpoint = 'https://api.pinata.cloud/pinning/pinFileToIPFS';
+  const body = new FormData();
+  body.append('file', file.stream(), file.name);
+
+  const res = await fetch(pinataEndpoint, {
+    method: 'POST',
+    headers: {
+      'pinata_api_key': process.env.PINATA_API_KEY,
+      'pinata_secret_api_key': process.env.PINATA_SECRET_API_KEY,
+    },
+    body,
+  });
+
+  if (!res.ok) {
+    const error = await res.text();
+    return NextResponse.json({ ok: false, error }, { status: 500 });
+  }
+
+  const data = await res.json();
+
+  // Optionally: log to Notion here...
+
+  return NextResponse.json({ ok: true, cid: data.IpfsHash });
 }
