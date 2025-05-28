@@ -1,41 +1,43 @@
-import { NextResponse } from 'next/server';
+'use client'
+import { useState } from 'react'
 
-export const config = {
-  api: { bodyParser: false }
-};
+export default function EssenceUpload() {
+  const [file, setFile] = useState(null)
+  const [email, setEmail] = useState('')
+  const [desc, setDesc] = useState('')
+  const [status, setStatus] = useState('')
 
-export async function POST(req) {
-  const formData = await req.formData();
-  const file = formData.get('file');
-
-  if (!file) {
-    return NextResponse.json({ ok: false, error: 'No file uploaded.' }, { status: 400 });
+  async function handleSubmit(e) {
+    e.preventDefault()
+    setStatus('Uploading...')
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('email', email)
+    formData.append('description', desc)
+    const res = await fetch('/api/essence-upload', {
+      method: 'POST',
+      body: formData,
+    })
+    if (res.ok) {
+      const { cid } = await res.json()
+      setStatus(`Success! Uploaded to IPFS: ${cid}`)
+    } else {
+      setStatus('Upload failed')
+    }
   }
 
-  // Pinata endpoint and headers
-  const pinataEndpoint = 'https://api.pinata.cloud/pinning/pinFileToIPFS';
-  const body = new FormData();
-  body.append('file', file.stream(), file.name);
-
-  const res = await fetch(pinataEndpoint, {
-    method: 'POST',
-    headers: {
-      'pinata_api_key': process.env.PINATA_API_KEY,
-      'pinata_secret_api_key': process.env.PINATA_SECRET_API_KEY,
-    },
-    body,
-  });
-
-  if (!res.ok) {
-    const error = await res.text();
-    return NextResponse.json({ ok: false, error }, { status: 500 });
-  }
-
-  const data = await res.json();
-
-  // Optionally: log to Notion here...
-
-  return NextResponse.json({ ok: true, cid: data.IpfsHash });
+  return (
+    <main className="flex min-h-screen flex-col items-center justify-center bg-black text-white">
+      <div className="max-w-md text-center">
+        <h2 className="text-3xl font-bold mb-6">Essence Upload</h2>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <input type="file" onChange={e => setFile(e.target.files[0])} required className="text-black bg-white px-4 py-2 rounded" />
+          <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Your email" required className="text-black px-4 py-2 rounded" />
+          <textarea value={desc} onChange={e => setDesc(e.target.value)} placeholder="Describe your essence (optional)" className="text-black px-4 py-2 rounded" />
+          <button type="submit" className="px-6 py-2 rounded-2xl bg-white text-black font-bold shadow hover:bg-gray-200" disabled={!file}>Upload Essence</button>
+        </form>
+        {status && <p className="mt-4">{status}</p>}
+      </div>
+    </main>
+  )
 }
-
-
