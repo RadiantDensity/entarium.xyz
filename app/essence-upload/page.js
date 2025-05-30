@@ -22,7 +22,8 @@ export default function EssenceUpload() {
       const { cid } = await res.json()
       setStatus(`Success! Uploaded to IPFS: ${cid}`)
     } else {
-      setStatus('Upload failed')
+      const { error } = await res.json()
+      setStatus('Upload failed: ' + error)
     }
   }
 
