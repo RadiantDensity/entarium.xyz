@@ -1,5 +1,7 @@
 // app/api/upload-to-ipfs/route.js
 
+export const runtime = 'nodejs';
+
 import { NextResponse } from 'next/server';
 import { create } from 'ipfs-http-client';
 import { readFile } from 'fs/promises';
@@ -9,7 +11,6 @@ import { writeFile } from 'fs/promises';
 
 export async function POST(request) {
   try {
-    // Read uploaded file (expecting base64)
     const { filename, contentBase64 } = await request.json();
 
     if (!filename || !contentBase64) {
@@ -20,7 +21,6 @@ export async function POST(request) {
     const tempPath = join(tmpdir(), filename);
     await writeFile(tempPath, buffer);
 
-    // Connect to your local IPFS daemon
     const ipfs = create({ url: 'http://127.0.0.1:5001/api/v0' });
     const fileBuffer = await readFile(tempPath);
     const result = await ipfs.add(fileBuffer);
