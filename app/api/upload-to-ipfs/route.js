@@ -1,33 +1,44 @@
 // app/api/upload-to-ipfs/route.js
 
-export const runtime = 'nodejs';
+export const runtime = "nodejs";
 
-import { NextResponse } from 'next/server';
-import { create } from 'ipfs-http-client';
-import { readFile } from 'fs/promises';
-import { tmpdir } from 'os';
-import { join } from 'path';
-import { writeFile } from 'fs/promises';
+import { NextResponse } from "next/server";
+import { create } from "ipfs-http-client";
+import formidable from "formidable";
+import fs from "fs";
 
-export async function POST(request) {
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
+async function parseForm(req) {
+  return new Promise((resolve, reject) => {
+    const form = formidable({ keepExtensions: true });
+    form.parse(req, (err, fields, files) => {
+      if (err) reject(err);
+      else resolve({ fields, files });
+    });
+  });
+}
+
+export async function POST(req) {
   try {
-    const { filename, contentBase64 } = await request.json();
+    const { files } = await parseForm(req);
 
-    if (!filename || !contentBase64) {
-      return NextResponse.json({ error: 'Missing file data' }, { status: 400 });
+    const file = files.file;
+    if (!file || !file.filepath) {
+      return NextResponse.json({ error: "File not found" }, { status: 400 });
     }
 
-    const buffer = Buffer.from(contentBase64, 'base64');
-    const tempPath = join(tmpdir(), filename);
-    await writeFile(tempPath, buffer);
+    const ipfs = create({ url: "http://127.0.0.1:5001/api/v0" });
+    const data = fs.readFileSync(file.filepath);
+    const result = await ipfs.add(data);
 
-    const ipfs = create({ url: 'http://127.0.0.1:5001/api/v0' });
-    const fileBuffer = await readFile(tempPath);
-    const result = await ipfs.add(fileBuffer);
-
-    return NextResponse.json({ cid: result.path }, { status: 200 });
-  } catch (e) {
-    console.error(e);
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    return NextResponse.json({ cid: result.path });
+  } catch (err) {
+    console.error(err);
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
