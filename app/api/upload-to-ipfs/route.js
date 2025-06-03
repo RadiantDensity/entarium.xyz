@@ -1,5 +1,3 @@
-export const runtime = "nodejs";
-
 import { NextResponse } from "next/server";
 import formidable from "formidable";
 import fs from "fs";
@@ -9,9 +7,7 @@ import { toFile } from "helia/file";
 import { logUpload } from "@/lib/cidLogger";
 
 export const config = {
-  api: {
-    bodyParser: false,
-  },
+  api: { bodyParser: false }
 };
 
 async function parseForm(req) {
@@ -33,8 +29,6 @@ export async function POST(req) {
     }
 
     const fileBuffer = fs.readFileSync(file.filepath);
-
-    // Helia (in-memory node)
     const helia = await createHelia();
     const fsys = unixfs(helia);
     const cid = await fsys.addFile(toFile(fileBuffer, file.originalFilename));
