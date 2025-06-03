@@ -1,46 +1,48 @@
-export default function Home() {
-  return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-black text-white">
-      <div className="max-w-xl text-center">
-        <img
-          src="/entarium-logo.png"
-          alt="Entarium Logo"
-          className="mx-auto mb-8 w-32 h-32 rounded-full shadow-lg"
-        />
-        <h1 className="text-4xl font-extrabold mb-4 tracking-tight">ENTARIUM</h1>
-        <p className="text-xl mb-6 font-light opacity-80">
-          The Genesis Portal for Independent Artists.<br/>
-          Decentralized. Radiant. Limitless.
-        </p>
-        <form
-          action="https://formsubmit.co/launch@entarium.xyz"
-          method="POST"
-          className="flex flex-col items-center gap-3"
-        >
-          <input
-            type="email"
-            name="email"
-            required
-            placeholder="Enter your email"
-            className="px-4 py-2 rounded-xl text-black w-64"
-          />
-          <button
-            type="submit"
-            className="px-8 py-3 rounded-2xl bg-white text-black font-bold shadow transition hover:bg-gray-200"
-          >
-            Join the Waitlist
-          </button>
-        </form><a
-  href="/essence-upload"
-  className="mt-8 inline-block px-8 py-3 rounded-2xl bg-white text-black font-bold shadow transition hover:bg-gray-200"
->
-  Upload Your Essence
-</a>
+'use client';
+import { useRef, useState } from "react";
 
-        <div className="mt-10 text-xs opacity-50">
-          &copy; {new Date().getFullYear()} Entarium – A Radiant Density Initiative
+export default function Home() {
+  const fileInputRef = useRef(null);
+  const [cid, setCid] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function handleUpload(e) {
+    e.preventDefault();
+    setLoading(true);
+    const file = fileInputRef.current.files[0];
+    if (!file) {
+      setLoading(false);
+      return;
+    }
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await fetch("/api/upload-to-ipfs", {
+      method: "POST",
+      body: formData,
+    });
+    const data = await res.json();
+    setCid(data.cid || "Error uploading");
+    setLoading(false);
+  }
+
+  return (
+    <main className="flex flex-col items-center justify-center min-h-screen p-4">
+      <form onSubmit={handleUpload} className="flex flex-col items-center space-y-4">
+        <input type="file" ref={fileInputRef} className="border p-2" />
+        <button
+          type="submit"
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
+          disabled={loading}
+        >
+          {loading ? "Uploading..." : "Upload to IPFS"}
+        </button>
+      </form>
+      {cid && (
+        <div className="mt-4">
+          <div className="font-bold">CID:</div>
+          <div className="break-all">{cid}</div>
         </div>
-      </div>
+      )}
     </main>
   );
 }
