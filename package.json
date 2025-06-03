@@ -9,11 +9,12 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@helia/unixfs": "^5.0.3",
     "@notionhq/client": "^3.1.2",
     "better-sqlite3": "^11.10.0",
     "formidable": "^3.5.4",
     "fs-extra": "^11.3.0",
-    "ipfs-http-client": "^56.0.3",
+    "helia": "^5.4.2",
     "next": "15.1.8",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
