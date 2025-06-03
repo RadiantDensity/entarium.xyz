@@ -31,7 +31,7 @@ export async function POST(req) {
 
     const fileBuffer = fs.readFileSync(file.filepath);
 
-    // Modern Helia upload: just pass the Buffer!
+    // Helia (in-memory node)
     const helia = await createHelia();
     const fsys = unixfs(helia);
     const cid = await fsys.addFile(fileBuffer);
