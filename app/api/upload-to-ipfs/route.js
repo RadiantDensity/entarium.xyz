@@ -1,11 +1,10 @@
-// app/api/upload-to-ipfs/route.js
-
 export const runtime = "nodejs";
 
 import { NextResponse } from "next/server";
 import { create } from "ipfs-http-client";
 import formidable from "formidable";
 import fs from "fs";
+import { logUpload } from "@/lib/cidLogger";
 
 export const config = {
   api: {
@@ -35,6 +34,11 @@ export async function POST(req) {
     const ipfs = create({ url: "http://127.0.0.1:5001/api/v0" });
     const data = fs.readFileSync(file.filepath);
     const result = await ipfs.add(data);
+
+    logUpload({
+      cid: result.path,
+      filename: file.originalFilename,
+    });
 
     return NextResponse.json({ cid: result.path });
   } catch (err) {
