@@ -5,13 +5,10 @@ import formidable from "formidable";
 import fs from "fs";
 import { createHelia } from "helia";
 import { unixfs } from "@helia/unixfs";
-import { toFile } from "helia/file";
 import { logUpload } from "@/lib/cidLogger";
 
 export const config = {
-  api: {
-    bodyParser: false,
-  },
+  api: { bodyParser: false },
 };
 
 async function parseForm(req) {
@@ -34,10 +31,10 @@ export async function POST(req) {
 
     const fileBuffer = fs.readFileSync(file.filepath);
 
-    // Helia (in-memory node)
+    // Modern Helia upload: just pass the Buffer!
     const helia = await createHelia();
     const fsys = unixfs(helia);
-    const cid = await fsys.addFile(toFile(fileBuffer, file.originalFilename));
+    const cid = await fsys.addFile(fileBuffer);
 
     logUpload({ cid: cid.toString(), filename: file.originalFilename });
 
